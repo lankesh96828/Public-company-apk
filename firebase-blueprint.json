@@ -1,0 +1,582 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Survivor profile, currencies, Luck Royale pity counters, unlocked cosmetics, emotes, and career stats.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the profile owner."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Survivor display callsign."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Account level."
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Current level XP progress."
+        },
+        "gold": {
+          "type": "integer",
+          "description": "In-game Gold balance."
+        },
+        "diamonds": {
+          "type": "integer",
+          "description": "In-game Diamonds balance."
+        },
+        "ffTokens": {
+          "type": "integer",
+          "description": "Luck Royale duplicate token balance."
+        },
+        "luckDiamond": {
+          "type": "integer",
+          "description": "Diamond Royale luck counter (0-100)."
+        },
+        "luckGold": {
+          "type": "integer",
+          "description": "Gold Royale luck counter (0-100)."
+        },
+        "luckWeapon": {
+          "type": "integer",
+          "description": "Weapon Royale luck counter (0-100)."
+        },
+        "luckIncubator": {
+          "type": "integer",
+          "description": "Hero Incubator luck counter (0-100)."
+        },
+        "luckEmote": {
+          "type": "integer",
+          "description": "Emote Royale luck counter (0-100)."
+        },
+        "luckFaded": {
+          "type": "integer",
+          "description": "Faded Wheel luck counter (0-100)."
+        },
+        "totalTopUpDiamonds": {
+          "type": "integer",
+          "description": "Cumulative Diamonds topped up."
+        },
+        "claimedTopUpMilestones": {
+          "type": "array",
+          "description": "Claimed top-up milestone IDs."
+        },
+        "unlockedSkins": {
+          "type": "array",
+          "description": "Unlocked character skin IDs."
+        },
+        "unlockedParachutes": {
+          "type": "array",
+          "description": "Unlocked parachute skin IDs."
+        },
+        "unlockedGlooWalls": {
+          "type": "array",
+          "description": "Unlocked gloo wall finish IDs."
+        },
+        "unlockedWeaponSkins": {
+          "type": "array",
+          "description": "Unlocked weapon skin IDs."
+        },
+        "unlockedEmotes": {
+          "type": "array",
+          "description": "Unlocked emote IDs."
+        },
+        "equippedEmotes": {
+          "type": "array",
+          "description": "Equipped emote wheel IDs (max 8)."
+        },
+        "wins": {
+          "type": "integer",
+          "description": "Total BOOYAH victories."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total eliminations."
+        },
+        "matches": {
+          "type": "integer",
+          "description": "Total matches played."
+        },
+        "rankPoints": {
+          "type": "integer",
+          "description": "Ranked Battle Royale points."
+        },
+        "selectedSkinId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "selectedLobbyWeapon": {
+          "type": "string",
+          "enum": ["ak47", "scar", "mp40", "m1887", "awm", "deagle"]
+        },
+        "selectedParachuteId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "selectedGlooId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "equippedWeaponSkins": {
+          "type": "object",
+          "description": "Map of weaponId to equipped weapon skin ID."
+        },
+        "sensitivity": {
+          "type": "number",
+          "description": "Aim sensitivity multiplier."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "level",
+        "xp",
+        "gold",
+        "diamonds",
+        "ffTokens",
+        "luckDiamond",
+        "luckGold",
+        "luckWeapon",
+        "luckIncubator",
+        "luckEmote",
+        "luckFaded",
+        "totalTopUpDiamonds",
+        "claimedTopUpMilestones",
+        "unlockedSkins",
+        "unlockedParachutes",
+        "unlockedGlooWalls",
+        "unlockedWeaponSkins",
+        "unlockedEmotes",
+        "equippedEmotes",
+        "wins",
+        "kills",
+        "matches",
+        "rankPoints",
+        "selectedSkinId",
+        "selectedLobbyWeapon",
+        "selectedParachuteId",
+        "selectedGlooId",
+        "equippedWeaponSkins",
+        "sensitivity",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public survivor leaderboard ranking record (non-PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "level": {
+          "type": "integer"
+        },
+        "wins": {
+          "type": "integer"
+        },
+        "kills": {
+          "type": "integer"
+        },
+        "matches": {
+          "type": "integer"
+        },
+        "rankPoints": {
+          "type": "integer"
+        },
+        "selectedSkinId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "level",
+        "wins",
+        "kills",
+        "matches",
+        "rankPoints",
+        "selectedSkinId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchRoom": {
+      "title": "MatchRoom",
+      "description": "Multiplayer squad room metadata for cross-player discovery.",
+      "type": "object",
+      "properties": {
+        "roomCode": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 12,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "mapId": {
+          "type": "string",
+          "enum": ["bermuda", "purgatory"]
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["br_classic", "br_blitz"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "active", "finished"]
+        },
+        "playerCount": {
+          "type": "integer"
+        },
+        "maxPlayers": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "roomCode",
+        "ownerUid",
+        "hostName",
+        "mapId",
+        "mode",
+        "status",
+        "playerCount",
+        "maxPlayers",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RoomPlayer": {
+      "title": "RoomPlayer",
+      "description": "Participant registration record inside a multiplayer MatchRoom.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomCode": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 12,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "skinId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "roomCode",
+        "name",
+        "skinId",
+        "ready",
+        "joinedAt",
+        "updatedAt"
+      ]
+    },
+    "FriendEntry": {
+      "title": "FriendEntry",
+      "description": "Owner-scoped friend entry referencing another Survivor.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "friendUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "friendName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "friendSkinId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "friendLevel": {
+          "type": "integer"
+        },
+        "friendRankPoints": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerUid",
+        "friendUid",
+        "friendName",
+        "friendSkinId",
+        "friendLevel",
+        "friendRankPoints",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FriendRequest": {
+      "title": "FriendRequest",
+      "description": "Incoming friend request or mutual acceptance notification stored under the recipient user.",
+      "type": "object",
+      "properties": {
+        "fromUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "toUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fromName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "fromSkinId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fromLevel": {
+          "type": "integer"
+        },
+        "fromRankPoints": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "fromUid",
+        "toUid",
+        "fromName",
+        "fromSkinId",
+        "fromLevel",
+        "fromRankPoints",
+        "status",
+        "createdAt"
+      ]
+    },
+    "TopUpTransaction": {
+      "title": "TopUpTransaction",
+      "description": "Razorpay or pending Direct UPI top-up receipt with anti-fraud verification state.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "orderId": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "paymentRef": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["razorpay_upi", "razorpay_qr", "direct_upi"]
+        },
+        "merchantUpiId": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 64
+        },
+        "payerUpiId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "packId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "amountInr": {
+          "type": "integer"
+        },
+        "diamondsCredited": {
+          "type": "integer"
+        },
+        "expectedDiamonds": {
+          "type": "integer"
+        },
+        "bonusDiamonds": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending_verification", "verified", "rejected"]
+        },
+        "credited": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "orderId",
+        "paymentRef",
+        "method",
+        "merchantUpiId",
+        "payerUpiId",
+        "packId",
+        "amountInr",
+        "diamondsCredited",
+        "expectedDiamonds",
+        "bonusDiamonds",
+        "status",
+        "credited",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private owner-scoped Survivor profile and progression."
+    },
+    "/users/{userId}/friends/{friendUid}": {
+      "schema": { "$ref": "#/entities/FriendEntry" },
+      "description": "Owner-scoped saved friends list entries."
+    },
+    "/users/{userId}/friendRequests/{fromUid}": {
+      "schema": { "$ref": "#/entities/FriendRequest" },
+      "description": "Incoming friend requests and mutual acceptance notifications."
+    },
+    "/users/{userId}/topups/{transactionId}": {
+      "schema": { "$ref": "#/entities/TopUpTransaction" },
+      "description": "Owner-scoped Razorpay and pending Direct UPI top-up receipts."
+    },
+    "/leaderboard/{userId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Publicly queryable survivor rankings (strictly non-PII)."
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/MatchRoom" },
+      "description": "Active multiplayer rooms directory."
+    },
+    "/rooms/{roomId}/players/{playerId}": {
+      "schema": { "$ref": "#/entities/RoomPlayer" },
+      "description": "Players registered in a multiplayer room."
+    }
+  }
+}

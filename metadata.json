@@ -1,0 +1,6 @@
+{
+  "name": "BLAZE DROP — Battle Royale",
+  "description": "Free Fire-inspired 3D Battle Royale with interactive survivor lobby, parachute drop, tactical gunplay, gloo walls, and shrinking safe zones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

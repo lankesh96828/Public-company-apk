@@ -1,0 +1,506 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isShortSlug(val) {
+      return val is string && val.size() >= 1 && val.size() <= 32 && val.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBoundedStringArray(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (arr.size() == 0 || (arr[0] is string && arr[0].size() >= 1 && arr[0].size() <= 32));
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'shivarajnaik60@gmail.com';
+    }
+
+    function hasValidExistingUid(userId) {
+      return ('uid' in existing()) && existing().uid is string && existing().uid == userId;
+    }
+
+    function hasValidExistingCreatedAt() {
+      return ('createdAt' in existing()) && (existing().createdAt is timestamp);
+    }
+
+    function isValidEquippedWeaponSkins(m) {
+      return m is map
+        && m.keys().hasAll(['ak47', 'scar', 'mp40', 'm1887', 'awm', 'deagle'])
+        && m.keys().hasOnly(['ak47', 'scar', 'mp40', 'm1887', 'awm', 'deagle'])
+        && isShortSlug(m.ak47)
+        && isShortSlug(m.scar)
+        && isShortSlug(m.mp40)
+        && isShortSlug(m.m1887)
+        && isShortSlug(m.awm)
+        && isShortSlug(m.deagle);
+    }
+
+    // Entity Blueprint Validators
+    function isValidUserProfile(data) {
+      return isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 20
+        && data.level is int && data.level >= 1 && data.level <= 999
+        && data.xp is int && data.xp >= 0 && data.xp < 5000
+        && data.gold is int && data.gold >= 0 && data.gold <= 10000000
+        && data.diamonds is int && data.diamonds >= 0 && data.diamonds <= 10000000
+        && data.ffTokens is int && data.ffTokens >= 0 && data.ffTokens <= 1000000
+        && data.luckDiamond is int && data.luckDiamond >= 0 && data.luckDiamond <= 100
+        && data.luckGold is int && data.luckGold >= 0 && data.luckGold <= 100
+        && data.luckWeapon is int && data.luckWeapon >= 0 && data.luckWeapon <= 100
+        && data.luckIncubator is int && data.luckIncubator >= 0 && data.luckIncubator <= 100
+        && data.luckEmote is int && data.luckEmote >= 0 && data.luckEmote <= 100
+        && data.luckFaded is int && data.luckFaded >= 0 && data.luckFaded <= 100
+        && data.totalTopUpDiamonds is int && data.totalTopUpDiamonds >= 0 && data.totalTopUpDiamonds <= 10000000
+        && isBoundedStringArray(data.claimedTopUpMilestones, 32)
+        && isBoundedStringArray(data.unlockedSkins, 64)
+        && isBoundedStringArray(data.unlockedParachutes, 32)
+        && isBoundedStringArray(data.unlockedGlooWalls, 32)
+        && isBoundedStringArray(data.unlockedWeaponSkins, 64)
+        && isBoundedStringArray(data.unlockedEmotes, 32)
+        && isBoundedStringArray(data.equippedEmotes, 8)
+        && data.wins is int && data.wins >= 0 && data.wins <= 1000000
+        && data.kills is int && data.kills >= 0 && data.kills <= 10000000
+        && data.matches is int && data.matches >= 0 && data.matches <= 1000000
+        && data.rankPoints is int && data.rankPoints >= 0 && data.rankPoints <= 1000000
+        && isShortSlug(data.selectedSkinId)
+        && data.selectedLobbyWeapon in ['ak47', 'scar', 'mp40', 'm1887', 'awm', 'deagle']
+        && isShortSlug(data.selectedParachuteId)
+        && isShortSlug(data.selectedGlooId)
+        && isValidEquippedWeaponSkins(data.equippedWeaponSkins)
+        && (data.sensitivity is int || data.sensitivity is float)
+        && data.sensitivity >= 0.2 && data.sensitivity <= 3.5
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFriendEntry(data, userId, friendUid) {
+      return isValidId(data.ownerUid)
+        && data.ownerUid == request.auth.uid
+        && data.ownerUid == userId
+        && isValidId(data.friendUid)
+        && data.friendUid == friendUid
+        && data.friendUid != data.ownerUid
+        && data.friendName is string && data.friendName.size() >= 1 && data.friendName.size() <= 20
+        && isShortSlug(data.friendSkinId)
+        && data.friendLevel is int && data.friendLevel >= 1 && data.friendLevel <= 999
+        && data.friendRankPoints is int && data.friendRankPoints >= 0 && data.friendRankPoints <= 1000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFriendRequest(data, userId, fromUid) {
+      return isValidId(data.fromUid)
+        && data.fromUid == request.auth.uid
+        && data.fromUid == fromUid
+        && isValidId(data.toUid)
+        && data.toUid == userId
+        && data.toUid != data.fromUid
+        && data.fromName is string && data.fromName.size() >= 1 && data.fromName.size() <= 20
+        && isShortSlug(data.fromSkinId)
+        && data.fromLevel is int && data.fromLevel >= 1 && data.fromLevel <= 999
+        && data.fromRankPoints is int && data.fromRankPoints >= 0 && data.fromRankPoints <= 1000000
+        && data.status in ['pending', 'accepted']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidTopUpTransaction(data, userId) {
+      return isValidId(data.uid)
+        && data.uid == userId
+        && (data.uid == request.auth.uid || isAdmin())
+        && data.orderId is string && data.orderId.size() >= 4 && data.orderId.size() <= 64 && data.orderId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.paymentRef is string && data.paymentRef.size() >= 4 && data.paymentRef.size() <= 64 && data.paymentRef.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.method in ['razorpay_upi', 'razorpay_qr', 'direct_upi']
+        && data.merchantUpiId is string && data.merchantUpiId.size() >= 5 && data.merchantUpiId.size() <= 64
+        && data.payerUpiId is string && data.payerUpiId.size() >= 1 && data.payerUpiId.size() <= 64
+        && isShortSlug(data.packId)
+        && data.amountInr is int && data.amountInr >= 1 && data.amountInr <= 100000
+        && data.diamondsCredited is int && data.diamondsCredited >= 0 && data.diamondsCredited <= 50000
+        && data.expectedDiamonds is int && data.expectedDiamonds >= 1 && data.expectedDiamonds <= 50000
+        && data.bonusDiamonds is int && data.bonusDiamonds >= 0 && data.bonusDiamonds <= 20000
+        && data.status in ['pending_verification', 'verified', 'rejected']
+        && data.credited is bool
+        && data.createdAt is timestamp
+        && (
+          (data.method == 'direct_upi' && (
+            (data.status == 'pending_verification' && data.diamondsCredited == 0 && data.credited == false)
+            || (data.status == 'verified' && data.diamondsCredited == data.expectedDiamonds)
+            || (data.status == 'rejected' && data.diamondsCredited == 0 && data.credited == false)
+          ))
+          || (data.method in ['razorpay_upi', 'razorpay_qr']
+            && data.paymentRef.matches('^pay_[a-zA-Z0-9]+$')
+            && data.status == 'verified'
+            && data.diamondsCredited == data.expectedDiamonds)
+        );
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 20
+        && data.level is int && data.level >= 1 && data.level <= 999
+        && data.wins is int && data.wins >= 0 && data.wins <= 1000000
+        && data.kills is int && data.kills >= 0 && data.kills <= 10000000
+        && data.matches is int && data.matches >= 0 && data.matches <= 1000000
+        && data.rankPoints is int && data.rankPoints >= 0 && data.rankPoints <= 1000000
+        && isShortSlug(data.selectedSkinId)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMatchRoom(data) {
+      return data.roomCode is string && data.roomCode.size() >= 4 && data.roomCode.size() <= 12 && data.roomCode.matches('^[a-zA-Z0-9_\\-]+$')
+        && isValidId(data.ownerUid)
+        && data.hostName is string && data.hostName.size() >= 1 && data.hostName.size() <= 20
+        && data.mapId in ['bermuda', 'purgatory']
+        && data.mode in ['br_classic', 'br_blitz']
+        && data.status in ['waiting', 'active', 'finished']
+        && data.playerCount is int && data.playerCount >= 0 && data.playerCount <= 16
+        && data.maxPlayers is int && data.maxPlayers >= 2 && data.maxPlayers <= 16
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRoomPlayer(data) {
+      return isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.roomCode is string && data.roomCode.size() >= 4 && data.roomCode.size() <= 12 && data.roomCode.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 20
+        && isShortSlug(data.skinId)
+        && data.ready is bool
+        && data.joinedAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // CollectionGroup Admin Queue Read for Pending Top-Ups
+    match /{path=**}/topups/{transactionId} {
+      allow list: if isAdmin() && resource.data.status in ['pending_verification', 'verified', 'rejected'];
+    }
+
+    // Collection: /users/{userId} (Strictly Owner-Isolated)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().keys().hasAll([
+          'uid', 'name', 'level', 'xp', 'gold', 'diamonds', 'ffTokens',
+          'luckDiamond', 'luckGold', 'luckWeapon', 'luckIncubator', 'luckEmote', 'luckFaded',
+          'totalTopUpDiamonds', 'claimedTopUpMilestones', 'unlockedSkins', 'unlockedParachutes',
+          'unlockedGlooWalls', 'unlockedWeaponSkins', 'unlockedEmotes', 'equippedEmotes',
+          'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'selectedLobbyWeapon',
+          'selectedParachuteId', 'selectedGlooId', 'equippedWeaponSkins', 'sensitivity',
+          'createdAt', 'updatedAt'
+        ])
+        && incoming().keys().hasOnly([
+          'uid', 'name', 'level', 'xp', 'gold', 'diamonds', 'ffTokens',
+          'luckDiamond', 'luckGold', 'luckWeapon', 'luckIncubator', 'luckEmote', 'luckFaded',
+          'totalTopUpDiamonds', 'claimedTopUpMilestones', 'unlockedSkins', 'unlockedParachutes',
+          'unlockedGlooWalls', 'unlockedWeaponSkins', 'unlockedEmotes', 'equippedEmotes',
+          'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'selectedLobbyWeapon',
+          'selectedParachuteId', 'selectedGlooId', 'equippedWeaponSkins', 'sensitivity',
+          'createdAt', 'updatedAt'
+        ])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().updatedAt == request.time
+        && (
+          (
+            hasValidExistingUid(userId)
+            && hasValidExistingCreatedAt()
+            && incoming().uid == existing().uid
+            && incoming().createdAt == existing().createdAt
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'level', 'xp', 'gold', 'diamonds', 'ffTokens',
+              'luckDiamond', 'luckGold', 'luckWeapon', 'luckIncubator', 'luckEmote', 'luckFaded',
+              'totalTopUpDiamonds', 'claimedTopUpMilestones', 'unlockedSkins', 'unlockedParachutes',
+              'unlockedGlooWalls', 'unlockedWeaponSkins', 'unlockedEmotes', 'equippedEmotes',
+              'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'selectedLobbyWeapon',
+              'selectedParachuteId', 'selectedGlooId', 'equippedWeaponSkins', 'sensitivity', 'updatedAt'
+            ])
+          )
+          || (
+            (!hasValidExistingUid(userId) || !hasValidExistingCreatedAt())
+            && (!hasValidExistingUid(userId) || incoming().uid == existing().uid)
+            && (hasValidExistingCreatedAt() ? incoming().createdAt == existing().createdAt : incoming().createdAt == request.time)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'uid', 'createdAt',
+              'name', 'level', 'xp', 'gold', 'diamonds', 'ffTokens',
+              'luckDiamond', 'luckGold', 'luckWeapon', 'luckIncubator', 'luckEmote', 'luckFaded',
+              'totalTopUpDiamonds', 'claimedTopUpMilestones', 'unlockedSkins', 'unlockedParachutes',
+              'unlockedGlooWalls', 'unlockedWeaponSkins', 'unlockedEmotes', 'equippedEmotes',
+              'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'selectedLobbyWeapon',
+              'selectedParachuteId', 'selectedGlooId', 'equippedWeaponSkins', 'sensitivity', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if false;
+
+      // Subcollection: /users/{userId}/friends/{friendUid} (Master Gate + Owner Isolated)
+      match /friends/{friendUid} {
+        allow get: if isValidId(userId)
+          && isValidId(friendUid)
+          && isOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isOwner(userId)
+          && resource.data.ownerUid == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(friendUid)
+          && isOwner(userId)
+          && userId != friendUid
+          && isValidFriendEntry(incoming(), userId, friendUid)
+          && incoming().keys().hasAll([
+            'ownerUid', 'friendUid', 'friendName', 'friendSkinId',
+            'friendLevel', 'friendRankPoints', 'createdAt', 'updatedAt'
+          ])
+          && incoming().keys().hasOnly([
+            'ownerUid', 'friendUid', 'friendName', 'friendSkinId',
+            'friendLevel', 'friendRankPoints', 'createdAt', 'updatedAt'
+          ])
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && exists(/databases/$(database)/documents/leaderboard/$(friendUid));
+        allow update: if isValidId(userId)
+          && isValidId(friendUid)
+          && isOwner(userId)
+          && isValidFriendEntry(incoming(), userId, friendUid)
+          && incoming().ownerUid == existing().ownerUid
+          && incoming().friendUid == existing().friendUid
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'friendName', 'friendSkinId', 'friendLevel', 'friendRankPoints', 'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if isValidId(userId)
+          && isValidId(friendUid)
+          && isOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId));
+      }
+
+      // Subcollection: /users/{userId}/friendRequests/{fromUid} (Friend Requests + Mutual Accepts)
+      match /friendRequests/{fromUid} {
+        allow get: if isValidId(userId)
+          && isValidId(fromUid)
+          && (isOwner(userId) || isOwner(fromUid));
+        allow list: if isOwner(userId)
+          && resource.data.toUid == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(fromUid)
+          && isSignedIn()
+          && request.auth.uid == fromUid
+          && userId != fromUid
+          && isValidFriendRequest(incoming(), userId, fromUid)
+          && incoming().keys().hasAll([
+            'fromUid', 'toUid', 'fromName', 'fromSkinId', 'fromLevel', 'fromRankPoints', 'status', 'createdAt'
+          ])
+          && incoming().keys().hasOnly([
+            'fromUid', 'toUid', 'fromName', 'fromSkinId', 'fromLevel', 'fromRankPoints', 'status', 'createdAt'
+          ])
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && exists(/databases/$(database)/documents/leaderboard/$(fromUid));
+        allow update: if false;
+        allow delete: if isValidId(userId)
+          && isValidId(fromUid)
+          && (isOwner(userId) || isOwner(fromUid));
+      }
+
+      // Subcollection: /users/{userId}/topups/{transactionId} (Anti-Fraud Pending/Verified Top-Up Queue)
+      match /topups/{transactionId} {
+        allow get: if isValidId(userId)
+          && isValidId(transactionId)
+          && (isOwner(userId) || isAdmin())
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if (isOwner(userId) && resource.data.uid == request.auth.uid)
+          || (isAdmin() && resource.data.status in ['pending_verification', 'verified', 'rejected']);
+        allow create: if isValidId(userId)
+          && isValidId(transactionId)
+          && isOwner(userId)
+          && isValidTopUpTransaction(incoming(), userId)
+          && incoming().credited == false
+          && (
+            (incoming().method == 'direct_upi'
+              && incoming().status == 'pending_verification'
+              && incoming().diamondsCredited == 0)
+            || (incoming().method in ['razorpay_upi', 'razorpay_qr']
+              && incoming().status == 'verified'
+              && incoming().paymentRef.matches('^pay_[a-zA-Z0-9]+$'))
+          )
+          && incoming().keys().hasAll([
+            'uid', 'orderId', 'paymentRef', 'method', 'merchantUpiId', 'payerUpiId',
+            'packId', 'amountInr', 'diamondsCredited', 'expectedDiamonds', 'bonusDiamonds',
+            'status', 'credited', 'createdAt'
+          ])
+          && incoming().keys().hasOnly([
+            'uid', 'orderId', 'paymentRef', 'method', 'merchantUpiId', 'payerUpiId',
+            'packId', 'amountInr', 'diamondsCredited', 'expectedDiamonds', 'bonusDiamonds',
+            'status', 'credited', 'createdAt'
+          ])
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isValidId(userId)
+          && isValidId(transactionId)
+          && isSignedIn()
+          && isValidTopUpTransaction(incoming(), userId)
+          && (
+            (
+              isAdmin()
+              && existing().status == 'pending_verification'
+              && incoming().status in ['verified', 'rejected']
+              && incoming().uid == existing().uid
+              && incoming().orderId == existing().orderId
+              && incoming().paymentRef == existing().paymentRef
+              && incoming().method == existing().method
+              && incoming().merchantUpiId == existing().merchantUpiId
+              && incoming().payerUpiId == existing().payerUpiId
+              && incoming().packId == existing().packId
+              && incoming().amountInr == existing().amountInr
+              && incoming().expectedDiamonds == existing().expectedDiamonds
+              && incoming().bonusDiamonds == existing().bonusDiamonds
+              && incoming().createdAt == existing().createdAt
+              && incoming().credited == false
+              && (
+                (incoming().status == 'verified' && incoming().diamondsCredited == existing().expectedDiamonds)
+                || (incoming().status == 'rejected' && incoming().diamondsCredited == 0)
+              )
+              && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'diamondsCredited', 'credited'])
+            ) || (
+              isOwner(userId)
+              && existing().status == 'verified'
+              && existing().credited == false
+              && incoming().credited == true
+              && incoming().diff(existing()).affectedKeys().hasOnly(['credited'])
+            )
+          );
+        allow delete: if false;
+      }
+    }
+
+    // Collection: /leaderboard/{userId} (Public non-PII Rankings, Owner Write)
+    match /leaderboard/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if resource.data.rankPoints >= 0;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming())
+        && incoming().keys().hasAll(['uid', 'name', 'level', 'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'createdAt', 'updatedAt'])
+        && incoming().keys().hasOnly(['uid', 'name', 'level', 'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'createdAt', 'updatedAt'])
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming())
+        && incoming().updatedAt == request.time
+        && (
+          (
+            hasValidExistingUid(userId)
+            && hasValidExistingCreatedAt()
+            && incoming().uid == existing().uid
+            && incoming().createdAt == existing().createdAt
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'level', 'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'updatedAt'
+            ])
+          )
+          || (
+            (!hasValidExistingUid(userId) || !hasValidExistingCreatedAt())
+            && (!hasValidExistingUid(userId) || incoming().uid == existing().uid)
+            && (hasValidExistingCreatedAt() ? incoming().createdAt == existing().createdAt : incoming().createdAt == request.time)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'uid', 'createdAt', 'name', 'level', 'wins', 'kills', 'matches', 'rankPoints', 'selectedSkinId', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if false;
+    }
+
+    // Collection: /rooms/{roomId}
+    match /rooms/{roomId} {
+      allow get: if isValidId(roomId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.status in ['waiting', 'active'];
+      allow create: if isValidId(roomId)
+        && isSignedIn()
+        && isValidMatchRoom(incoming())
+        && incoming().keys().hasAll(['roomCode', 'ownerUid', 'hostName', 'mapId', 'mode', 'status', 'playerCount', 'maxPlayers', 'createdAt', 'updatedAt'])
+        && incoming().keys().hasOnly(['roomCode', 'ownerUid', 'hostName', 'mapId', 'mode', 'status', 'playerCount', 'maxPlayers', 'createdAt', 'updatedAt'])
+        && incoming().ownerUid == request.auth.uid
+        && incoming().roomCode == roomId
+        && incoming().status == 'waiting'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(roomId)
+        && isSignedIn()
+        && existing().status != 'finished'
+        && isValidMatchRoom(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().roomCode == existing().roomCode
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['mapId', 'mode', 'status', 'playerCount', 'updatedAt'])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['playerCount', 'updatedAt']) && incoming().playerCount >= 0 && incoming().playerCount <= existing().maxPlayers)
+        );
+      allow delete: if isValidId(roomId) && isSignedIn() && existing().ownerUid == request.auth.uid;
+
+      // Subcollection: /rooms/{roomId}/players/{playerId} (Master Gate via get/exists)
+      match /players/{playerId} {
+        allow get: if isValidId(roomId) && isValidId(playerId) && isSignedIn()
+          && exists(/databases/$(database)/documents/rooms/$(roomId));
+        allow list: if isSignedIn() && resource.data.roomCode is string && resource.data.roomCode.size() <= 12;
+        allow create: if isValidId(roomId)
+          && isValidId(playerId)
+          && isOwner(playerId)
+          && isValidRoomPlayer(incoming())
+          && incoming().keys().hasAll(['uid', 'roomCode', 'name', 'skinId', 'ready', 'joinedAt', 'updatedAt'])
+          && incoming().keys().hasOnly(['uid', 'roomCode', 'name', 'skinId', 'ready', 'joinedAt', 'updatedAt'])
+          && incoming().roomCode == roomId
+          && incoming().joinedAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/rooms/$(roomId))
+          && get(/databases/$(database)/documents/rooms/$(roomId)).data.status == 'waiting';
+        allow update: if isValidId(roomId)
+          && isValidId(playerId)
+          && isOwner(playerId)
+          && isValidRoomPlayer(incoming())
+          && incoming().uid == existing().uid
+          && incoming().roomCode == existing().roomCode
+          && incoming().joinedAt == existing().joinedAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'skinId', 'ready', 'updatedAt'])
+          && get(/databases/$(database)/documents/rooms/$(roomId)).data.status != 'finished';
+        allow delete: if isValidId(roomId) && isValidId(playerId) && isSignedIn()
+          && (isOwner(playerId) || get(/databases/$(database)/documents/rooms/$(roomId)).data.ownerUid == request.auth.uid);
+      }
+    }
+  }
+}
